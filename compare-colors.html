@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nota — Color Comparison</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500&display=swap" rel="stylesheet">
+
+    <style>
+        @font-face {
+            font-family: 'Nilfgard';
+            src: url(fonts/nilfgard.woff2) format('woff2'),
+                 url(fonts/nilfgard.woff) format('woff');
+            font-weight: normal;
+            font-style: normal;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'DM Sans', system-ui, sans-serif;
+            background: #e8e4e0;
+            display: flex;
+            flex-direction: column;
+            gap: 0;
+        }
+
+        /* ── LABEL BAR ── */
+        .label-bar {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .label {
+            padding: 10px 16px;
+            font-size: 11px;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            font-weight: 500;
+            text-align: center;
+        }
+
+        .label.amber { background: oklch(62% 0.18 48); color: #fff; }
+        .label.wine  { background: #9D2526; color: #fff; }
+
+        /* ── SPLIT WRAPPER ── */
+        .split {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            min-height: 100dvh;
+        }
+
+        /* ── SHARED PANEL STYLES ── */
+        .panel {
+            display: flex;
+            flex-direction: column;
+            min-height: 100dvh;
+        }
+
+        /* divider line between panels */
+        .panel:first-child {
+            border-right: 1px solid rgba(0,0,0,0.12);
+        }
+
+        /* ══════ AMBER / RUST PANEL ══════ */
+        .panel.amber {
+            --bg:       oklch(96% 0.012 78);
+            --surface:  oklch(99% 0.006 75);
+            --border:   oklch(85% 0.010 70);
+            --text-1:   oklch(18% 0.018 45);
+            --text-2:   oklch(45% 0.012 60);
+            --text-3:   oklch(65% 0.008 65);
+            --accent:   oklch(62% 0.18 48);
+            --confirmed: oklch(45% 0.12 145);
+            background: var(--bg);
+        }
+
+        /* ══════ WINE / CRIMSON PANEL ══════ */
+        .panel.wine {
+            --bg:       oklch(96% 0.012 78);
+            --surface:  oklch(99% 0.006 75);
+            --border:   oklch(85% 0.010 70);
+            --text-1:   oklch(18% 0.018 45);
+            --text-2:   oklch(45% 0.012 60);
+            --text-3:   oklch(65% 0.008 65);
+            --accent:   #9D2526;
+            --confirmed: oklch(45% 0.12 145);
+            background: var(--bg);
+        }
+
+        /* ── shared inner layout ── */
+        .panel-nav {
+            padding: 24px 24px 0;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .wordmark {
+            font-family: 'Nilfgard', Georgia, serif;
+            font-size: 22px;
+            color: var(--text-1);
+            letter-spacing: -0.01em;
+        }
+
+        .nav-link {
+            font-size: 13px;
+            color: var(--text-3);
+            text-decoration: none;
+            letter-spacing: 0.04em;
+            text-transform: uppercase;
+        }
+
+        .panel-main {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 40px 24px 32px;
+            max-width: 440px;
+            margin: 0 auto;
+            width: 100%;
+            text-align: center;
+        }
+
+        .eyebrow {
+            font-size: 11px;
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+            color: var(--accent);
+            margin-bottom: 20px;
+            font-weight: 500;
+        }
+
+        .headline {
+            font-family: 'Nilfgard', Georgia, serif;
+            font-size: clamp(28px, 5vw, 44px);
+            line-height: 1.08;
+            letter-spacing: -0.02em;
+            color: var(--text-1);
+            margin-bottom: 20px;
+        }
+
+        .headline em {
+            font-style: normal;
+            color: var(--accent);
+        }
+
+        .subhead {
+            font-size: 15px;
+            color: var(--text-2);
+            line-height: 1.55;
+            max-width: 280px;
+            margin: 0 auto 36px;
+        }
+
+        .divider {
+            width: 32px;
+            height: 1px;
+            background: var(--border);
+            margin: 0 auto 36px;
+        }
+
+        .form {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            width: 100%;
+            text-align: left;
+        }
+
+        .field { display: flex; flex-direction: column; gap: 5px; }
+
+        .field label {
+            font-size: 11px;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            color: var(--text-3);
+            font-weight: 500;
+        }
+
+        .field input {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 13px 14px;
+            font-family: 'DM Sans', system-ui, sans-serif;
+            font-size: 15px;
+            color: var(--text-1);
+            outline: none;
+            width: 100%;
+            -webkit-appearance: none;
+        }
+
+        .field input::placeholder { color: var(--text-3); }
+        .field input:focus { border-color: var(--accent); }
+
+        .btn-submit {
+            margin-top: 4px;
+            width: 100%;
+            padding: 14px;
+            background: var(--text-1);
+            color: var(--bg);
+            border: none;
+            border-radius: 8px;
+            font-family: 'DM Sans', system-ui, sans-serif;
+            font-size: 14px;
+            font-weight: 500;
+            letter-spacing: 0.06em;
+            text-transform: uppercase;
+            cursor: pointer;
+        }
+
+        /* accent-colored button variant — uncomment to test */
+        /* .btn-submit { background: var(--accent); color: #fff; } */
+
+        .panel-footer {
+            padding: 20px 24px;
+            text-align: center;
+            font-size: 12px;
+            color: var(--text-3);
+            letter-spacing: 0.04em;
+            text-transform: uppercase;
+        }
+
+        /* ── swatch chip ── */
+        .swatch-chip {
+            display: inline-block;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            margin-right: 4px;
+            vertical-align: middle;
+        }
+    </style>
+</head>
+<body>
+
+<!-- sticky labels -->
+<div class="label-bar">
+    <div class="label amber">
+        <span class="swatch-chip" style="background: oklch(62% 0.18 48);"></span>
+        Amber Rust &nbsp;·&nbsp; current
+    </div>
+    <div class="label wine">
+        <span class="swatch-chip" style="background: #9D2526;"></span>
+        #9D2526 &nbsp;·&nbsp; option B
+    </div>
+</div>
+
+<!-- side-by-side panels -->
+<div class="split">
+
+    <!-- ── AMBER PANEL ── -->
+    <div class="panel amber">
+        <nav class="panel-nav">
+            <span class="wordmark">Nota</span>
+            <span class="nav-link">¿Qué es Nota? →</span>
+        </nav>
+        <main class="panel-main">
+            <p class="eyebrow">San Juan, Puerto Rico</p>
+            <h1 class="headline">
+                La noche que<br>
+                <em>el grupo</em><br>
+                decide.
+            </h1>
+            <p class="subhead">
+                Vota por la noche que quieres. Cuando 30 personas dicen que sí, la noche se confirma.
+            </p>
+            <div class="divider"></div>
+            <form class="form" novalidate>
+                <div class="field">
+                    <label>Nombre</label>
+                    <input type="text" placeholder="Tu nombre">
+                </div>
+                <div class="field">
+                    <label>Email</label>
+                    <input type="email" placeholder="tu@email.com">
+                </div>
+                <div class="field">
+                    <label>WhatsApp</label>
+                    <input type="tel" placeholder="+1 787 000 0000">
+                </div>
+                <button type="button" class="btn-submit">Entrar a la lista →</button>
+            </form>
+        </main>
+        <footer class="panel-footer">Nota &nbsp;·&nbsp; San Juan, PR</footer>
+    </div>
+
+    <!-- ── WINE PANEL ── -->
+    <div class="panel wine">
+        <nav class="panel-nav">
+            <span class="wordmark">Nota</span>
+            <span class="nav-link">¿Qué es Nota? →</span>
+        </nav>
+        <main class="panel-main">
+            <p class="eyebrow">San Juan, Puerto Rico</p>
+            <h1 class="headline">
+                La noche que<br>
+                <em>el grupo</em><br>
+                decide.
+            </h1>
+            <p class="subhead">
+                Vota por la noche que quieres. Cuando 30 personas dicen que sí, la noche se confirma.
+            </p>
+            <div class="divider"></div>
+            <form class="form" novalidate>
+                <div class="field">
+                    <label>Nombre</label>
+                    <input type="text" placeholder="Tu nombre">
+                </div>
+                <div class="field">
+                    <label>Email</label>
+                    <input type="email" placeholder="tu@email.com">
+                </div>
+                <div class="field">
+                    <label>WhatsApp</label>
+                    <input type="tel" placeholder="+1 787 000 0000">
+                </div>
+                <button type="button" class="btn-submit">Entrar a la lista →</button>
+            </form>
+        </main>
+        <footer class="panel-footer">Nota &nbsp;·&nbsp; San Juan, PR</footer>
+    </div>
+
+</div>
+
+</body>
+</html>

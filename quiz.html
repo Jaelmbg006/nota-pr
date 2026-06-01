@@ -1,0 +1,703 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nota</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,700;1,6..72,300;1,6..72,700&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500&display=swap" rel="stylesheet">
+
+    <style>
+        :root {
+            --bg:           oklch(17% 0.032 50);
+            --cream:        oklch(96% 0.014 80);
+            --cream-dim:    oklch(92% 0.012 78);
+            --cream-faint:  oklch(84% 0.010 75);
+            --cream-ghost:  oklch(38% 0.010 65);
+            --amber:        #C9782E;
+            --card-bg:      oklch(97% 0.008 76);
+            --card-border:  oklch(88% 0.010 72);
+            --card-text:    oklch(18% 0.018 45);
+            --card-sub:     oklch(55% 0.010 60);
+            --f-display:    'Newsreader', Georgia, serif;
+            --f-body:       'DM Sans', system-ui, sans-serif;
+            --grain: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='200' height='200' filter='url(%23n)'/%3E%3C/svg%3E");
+        }
+
+        *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+        html, body {
+            width: 100%; height: 100%;
+            overflow: hidden;
+            font-family: var(--f-body);
+            -webkit-font-smoothing: antialiased;
+            background-color: var(--bg);
+            background-image: url('images/Coffeshop takeover.jpeg');
+            background-size: cover;
+            background-position: center 25%;
+        }
+
+        body::before {
+            content: '';
+            position: fixed; inset: 0;
+            background: oklch(10% 0.018 48 / 0.68);
+            z-index: 0;
+            pointer-events: none;
+        }
+
+        body::after {
+            content: '';
+            position: fixed; inset: 0;
+            opacity: 0.055;
+            background-image: var(--grain);
+            background-size: 200px 200px;
+            z-index: 9999;
+            pointer-events: none;
+        }
+
+        /* ── HEADER ── */
+        .quiz-header {
+            position: fixed;
+            top: 0; left: 0; right: 0;
+            z-index: 100;
+            padding: 28px 28px 0;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            pointer-events: none;
+            transition: opacity 0.4s ease;
+        }
+
+        .header-logo {
+            font-family: var(--f-display);
+            font-size: 15px;
+            font-weight: 700;
+            font-style: italic;
+            color: var(--cream-dim);
+            letter-spacing: 0.04em;
+        }
+
+        .dots { display: flex; gap: 7px; align-items: center; }
+
+        .dot {
+            width: 5px; height: 5px;
+            border-radius: 50%;
+            background: oklch(60% 0.010 70 / 0.28);
+            transition: background 0.35s ease, transform 0.35s ease;
+        }
+        .dot.active { background: var(--amber); transform: scale(1.35); }
+        .dot.done   { background: oklch(60% 0.010 70 / 0.55); }
+
+        /* ── SCREENS ──
+           Fade + subtle lift — no horizontal slide so off-screen screens
+           can never stack behind the entering one. */
+        .screen {
+            position: fixed; inset: 0;
+            z-index: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 88px 28px 40px;
+            opacity: 0;
+            transform: translateY(14px);
+            transition: opacity 0.38s ease, transform 0.38s ease;
+            pointer-events: none;
+        }
+
+        .screen.active {
+            opacity: 1;
+            transform: translateY(0);
+            pointer-events: all;
+            z-index: 2;
+        }
+
+        /* ── QUIZ COPY ── */
+        .quiz-inner {
+            width: 100%;
+            max-width: 480px;
+        }
+
+        .quiz-step {
+            font-size: 9px;
+            letter-spacing: 0.22em;
+            text-transform: uppercase;
+            color: var(--cream-ghost);
+            margin-bottom: 14px;
+        }
+
+        .quiz-question {
+            font-family: var(--f-display);
+            font-size: clamp(28px, 7.5vw, 40px);
+            font-weight: 700;
+            font-style: italic;
+            color: var(--cream);
+            line-height: 1.12;
+            letter-spacing: -0.01em;
+            margin-bottom: 28px;
+        }
+
+        /* ── ANSWER CARDS ── */
+        .answer-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 11px;
+        }
+
+        .answer-grid--col1 {
+            grid-template-columns: 1fr;
+        }
+
+        .answer-grid .answer-card:last-child:nth-child(odd) {
+            grid-column: 1 / -1;
+        }
+
+        .answer-card {
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: 14px;
+            padding: 20px 18px 18px;
+            text-align: left;
+            cursor: pointer;
+            box-shadow: 0 6px 28px oklch(0% 0 0 / 0.22),
+                        0 1px 4px  oklch(0% 0 0 / 0.10);
+            transition: transform 0.15s ease, border-color 0.18s ease,
+                        background 0.18s ease, box-shadow 0.18s ease;
+            outline: none;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        .answer-card:active { transform: scale(0.96); }
+
+        .answer-card.selected {
+            border-color: var(--amber);
+            background: oklch(97.5% 0.020 72);
+            box-shadow: 0 8px 36px oklch(0% 0 0 / 0.28),
+                        0 0 0 1px var(--amber);
+        }
+
+        .answer-title {
+            font-family: var(--f-display);
+            font-size: 17px;
+            font-weight: 700;
+            color: var(--card-text);
+            line-height: 1.18;
+            margin-bottom: 7px;
+        }
+
+        .answer-tag {
+            font-size: 8px;
+            letter-spacing: 0.18em;
+            text-transform: uppercase;
+            color: var(--card-sub);
+            transition: color 0.18s;
+        }
+
+        .answer-card.selected .answer-tag { color: var(--amber); }
+
+        /* ── CONTACT FORM (dark style, matches waitlist) ── */
+        .contact-fields { display: flex; flex-direction: column; gap: 28px; }
+
+        .c-field { display: flex; flex-direction: column; gap: 6px; }
+
+        .c-field label {
+            font-size: 9px;
+            letter-spacing: 0.18em;
+            text-transform: uppercase;
+            color: var(--cream-faint);
+            font-weight: 400;
+        }
+
+        .c-field input {
+            background: transparent;
+            border: none;
+            border-bottom: 1px solid oklch(70% 0.010 75 / 0.35);
+            padding: 8px 0 7px;
+            font-family: var(--f-body);
+            font-size: 15px;
+            font-weight: 300;
+            color: var(--cream);
+            outline: none;
+            width: 100%;
+            transition: border-color 0.18s;
+            -webkit-appearance: none;
+            border-radius: 0;
+        }
+
+        .c-field input::placeholder { color: oklch(72% 0.008 72); }
+        .c-field input:focus { border-bottom-color: var(--cream-dim); }
+
+        .c-required {
+            font-size: 8px;
+            letter-spacing: 0.14em;
+            text-transform: uppercase;
+            color: var(--amber);
+            margin-left: 6px;
+        }
+
+        .btn-submit {
+            margin-top: 32px;
+            width: 100%;
+            padding: 14px;
+            background: transparent;
+            color: var(--cream);
+            border: 1px solid oklch(70% 0.010 75 / 0.45);
+            border-radius: 0;
+            font-family: var(--f-body);
+            font-size: 11px;
+            font-weight: 400;
+            letter-spacing: 0.18em;
+            text-transform: uppercase;
+            cursor: pointer;
+            transition: background 0.18s, border-color 0.18s;
+        }
+
+        .btn-submit:hover  { background: oklch(92% 0.014 80 / 0.08); border-color: oklch(70% 0.010 75 / 0.7); }
+        .btn-submit:disabled { opacity: 0.4; cursor: default; }
+
+        .form-error {
+            font-size: 11px;
+            color: oklch(72% 0.14 48);
+            text-align: center;
+            margin-top: 10px;
+            display: none;
+        }
+
+        /* ── DONE SCREEN ── */
+        .done-inner {
+            text-align: center;
+            width: 100%;
+            max-width: 400px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .done-label {
+            font-size: 9px;
+            letter-spacing: 0.22em;
+            text-transform: uppercase;
+            color: var(--cream-faint);
+            margin-bottom: 10px;
+        }
+
+        .done-number {
+            font-family: var(--f-display);
+            font-size: clamp(72px, 20vw, 112px);
+            font-weight: 700;
+            font-style: italic;
+            color: var(--amber);
+            line-height: 1;
+            letter-spacing: -0.02em;
+            margin-bottom: 32px;
+            text-shadow: 0 0 60px oklch(68% 0.17 48 / 0.35);
+        }
+
+        .done-rule {
+            width: 100%; height: 1px;
+            background: oklch(60% 0.010 70 / 0.22);
+            margin-bottom: 24px;
+        }
+
+        .done-night-label {
+            font-size: 8px;
+            letter-spacing: 0.22em;
+            text-transform: uppercase;
+            color: var(--cream-faint);
+            margin-bottom: 10px;
+        }
+
+        .done-night-type {
+            font-family: var(--f-display);
+            font-size: clamp(28px, 7.5vw, 38px);
+            font-weight: 700;
+            font-style: italic;
+            color: var(--cream);
+            line-height: 1.1;
+            margin-bottom: 8px;
+        }
+
+        .done-night-details {
+            font-size: 12px;
+            font-weight: 300;
+            color: var(--cream-dim);
+            letter-spacing: 0.08em;
+            margin-bottom: 28px;
+        }
+
+        .done-next {
+            width: 100%;
+            margin-bottom: 24px;
+            text-align: center;
+        }
+
+        .done-next-label {
+            font-size: 9px;
+            letter-spacing: 0.22em;
+            text-transform: uppercase;
+            color: var(--cream-ghost);
+            margin-bottom: 10px;
+        }
+
+        .done-next-copy {
+            font-family: var(--f-display);
+            font-size: clamp(18px, 5vw, 22px);
+            font-weight: 700;
+            font-style: italic;
+            color: var(--cream-dim);
+            line-height: 1.2;
+        }
+
+        .share-btn {
+            width: 100%;
+            padding: 14px;
+            background: transparent;
+            color: var(--cream);
+            border: 1px solid oklch(70% 0.010 75 / 0.45);
+            border-radius: 0;
+            font-family: var(--f-body);
+            font-size: 11px;
+            font-weight: 400;
+            letter-spacing: 0.18em;
+            text-transform: uppercase;
+            cursor: pointer;
+            transition: background 0.18s, border-color 0.18s;
+        }
+
+        .share-btn:hover {
+            background: oklch(92% 0.014 80 / 0.08);
+            border-color: oklch(70% 0.010 75 / 0.7);
+        }
+    </style>
+</head>
+<body>
+
+<!-- ── HEADER ── -->
+<header class="quiz-header" id="quiz-header">
+    <span class="header-logo">Nota</span>
+    <div class="dots">
+        <div class="dot active" id="d1"></div>
+        <div class="dot"        id="d2"></div>
+        <div class="dot"        id="d3"></div>
+        <div class="dot"        id="d4"></div>
+        <div class="dot"        id="d5"></div>
+        <div class="dot"        id="d6"></div>
+    </div>
+</header>
+
+<!-- ── Q1: Timing ── -->
+<div class="screen active" id="q1">
+    <div class="quiz-inner">
+        <p class="quiz-step">01 / 05</p>
+        <h2 class="quiz-question">You're most<br>yourself at:</h2>
+        <div class="answer-grid">
+            <button class="answer-card" data-q="1" data-val="11pm">
+                <div class="answer-title">11pm</div>
+                <div class="answer-tag">Just arriving</div>
+            </button>
+            <button class="answer-card" data-q="1" data-val="1am">
+                <div class="answer-title">1am</div>
+                <div class="answer-tag">When it's peak</div>
+            </button>
+            <button class="answer-card" data-q="1" data-val="3am">
+                <div class="answer-title">3am</div>
+                <div class="answer-tag">Just the real ones</div>
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- ── Q2: DJ Song ── -->
+<div class="screen" id="q2">
+    <div class="quiz-inner">
+        <p class="quiz-step">02 / 05</p>
+        <h2 class="quiz-question">DJ drops<br>your song. You:</h2>
+        <div class="answer-grid answer-grid--col1">
+            <button class="answer-card" data-q="2" data-val="find">
+                <div class="answer-title">Find whoever's next to you</div>
+                <div class="answer-tag">Social · Connector</div>
+            </button>
+            <button class="answer-card" data-q="2" data-val="sing">
+                <div class="answer-title">Sing every word alone</div>
+                <div class="answer-tag">In your element</div>
+            </button>
+            <button class="answer-card" data-q="2" data-val="pull">
+                <div class="answer-title">Pull someone onto the floor</div>
+                <div class="answer-tag">Energy · Leader</div>
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- ── Q3: Know nobody ── -->
+<div class="screen" id="q3">
+    <div class="quiz-inner">
+        <p class="quiz-step">03 / 05</p>
+        <h2 class="quiz-question">You show up and<br>know nobody. You:</h2>
+        <div class="answer-grid answer-grid--col1">
+            <button class="answer-card" data-q="3" data-val="observe">
+                <div class="answer-title">Find the bar and observe</div>
+                <div class="answer-tag">Read the room first</div>
+            </button>
+            <button class="answer-card" data-q="3" data-val="approach">
+                <div class="answer-title">Walk up to the most interesting person</div>
+                <div class="answer-tag">No hesitation</div>
+            </button>
+            <button class="answer-card" data-q="3" data-val="warmup">
+                <div class="answer-title">Warm up slowly, then open up</div>
+                <div class="answer-tag">Takes time, gets there</div>
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- ── Q4: What kills a night ── -->
+<div class="screen" id="q4">
+    <div class="quiz-inner">
+        <p class="quiz-step">04 / 05</p>
+        <h2 class="quiz-question">What kills<br>a night for you:</h2>
+        <div class="answer-grid">
+            <button class="answer-card" data-q="4" data-val="music">
+                <div class="answer-title">Bad music</div>
+                <div class="answer-tag">Sound matters</div>
+            </button>
+            <button class="answer-card" data-q="4" data-val="crowd">
+                <div class="answer-title">Wrong crowd</div>
+                <div class="answer-tag">Vibe over venue</div>
+            </button>
+            <button class="answer-card" data-q="4" data-val="venue">
+                <div class="answer-title">Dead venue</div>
+                <div class="answer-tag">Space sets the tone</div>
+            </button>
+            <button class="answer-card" data-q="4" data-val="nothing">
+                <div class="answer-title">Nothing</div>
+                <div class="answer-tag">I make it work</div>
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- ── Q5: Best nights ── -->
+<div class="screen" id="q5">
+    <div class="quiz-inner">
+        <p class="quiz-step">05 / 05</p>
+        <h2 class="quiz-question">Best nights<br>happen:</h2>
+        <div class="answer-grid answer-grid--col1">
+            <button class="answer-card" data-q="5" data-val="core">
+                <div class="answer-title">With your core 3–4</div>
+                <div class="answer-tag">Tight crew</div>
+            </button>
+            <button class="answer-card" data-q="5" data-val="big">
+                <div class="answer-title">With a big group</div>
+                <div class="answer-tag">More the merrier</div>
+            </button>
+            <button class="answer-card" data-q="5" data-val="solo">
+                <div class="answer-title">When you go solo</div>
+                <div class="answer-tag">See what happens</div>
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- ── CONTACT ── -->
+<div class="screen" id="contact">
+    <div class="quiz-inner">
+        <p class="quiz-step">Último paso</p>
+        <h2 class="quiz-question">¿Dónde te<br>contactamos?</h2>
+        <div class="contact-fields">
+            <div class="c-field">
+                <label for="inp-name">Nombre</label>
+                <input id="inp-name" type="text" placeholder="Tu nombre" autocomplete="given-name">
+            </div>
+            <div class="c-field">
+                <label for="inp-phone">Número de teléfono <span class="c-required">requerido</span></label>
+                <input id="inp-phone" type="tel" placeholder="+1 787 000 0000" autocomplete="tel">
+            </div>
+            <div class="c-field">
+                <label for="inp-email">Email</label>
+                <input id="inp-email" type="email" placeholder="tu@email.com" autocomplete="email">
+            </div>
+        </div>
+        <p class="form-error" id="form-error">Necesitamos tu número de teléfono para avisarte.</p>
+        <button class="btn-submit" id="submit-btn">Entrar a la lista →</button>
+    </div>
+</div>
+
+<!-- ── DONE ── -->
+<div class="screen" id="done">
+    <div class="done-inner">
+        <p class="done-label">Founding Member</p>
+        <div class="done-number" id="done-number">#0</div>
+
+        <div class="done-rule"></div>
+
+        <p class="done-night-label">Tu noche es</p>
+        <p class="done-night-type"    id="done-night-type">—</p>
+        <p class="done-night-details" id="done-night-details">—</p>
+
+        <div class="done-rule"></div>
+
+        <div class="done-next">
+            <p class="done-next-copy">La noche es mejor con tu gente.</p>
+        </div>
+
+        <button class="share-btn" id="share-btn">Trae a tu gente →</button>
+    </div>
+</div>
+
+<script>
+(function () {
+    var current    = 1;
+    var answers    = {};
+    var dots       = ['d1','d2','d3','d4','d5','d6'].map(function (id) { return document.getElementById(id); });
+    var header     = document.getElementById('quiz-header');
+    var MEMBER_NUM = 95;
+    var TOTAL      = 200;
+
+    var timingMap = { '11pm': 'Early crowd', '1am': 'Peak energy', '3am': 'Late night' };
+
+    function getNightMatch(a) {
+        var type;
+        if (a[2] === 'pull') {
+            type = 'House Night';
+        } else if (a[2] === 'sing') {
+            type = 'Reggaeton Night';
+        } else if (a[2] === 'find') {
+            if (a[5] === 'core' && a[4] === 'venue') type = 'Latin Jazz';
+            else if (a[5] === 'core')                type = 'Rooftop Social';
+            else if (a[5] === 'big')                 type = 'Bar Social';
+            else                                     type = 'Rooftop Social';
+        } else {
+            type = 'Rooftop Social';
+        }
+        return { type: type, detail: timingMap[a[1]] || 'San Juan' };
+    }
+
+    /* Map quiz step → dot index (1-based).
+       Steps 1-3 = questions, step 4 = contact. */
+    function setDots(step) {
+        dots.forEach(function (d, i) {
+            d.classList.remove('active', 'done');
+            if (i + 1 < step)       d.classList.add('done');
+            else if (i + 1 === step) d.classList.add('active');
+        });
+    }
+
+    function getScreen(id) {
+        return document.getElementById(id);
+    }
+
+    function transition(fromId, toId) {
+        getScreen(fromId).classList.remove('active');
+        getScreen(toId).classList.add('active');
+    }
+
+    /* Answer card taps — questions 1-5 */
+    document.querySelectorAll('.answer-card').forEach(function (card) {
+        card.addEventListener('click', function () {
+            var q = parseInt(this.dataset.q);
+            answers[q] = this.dataset.val;
+
+            document.querySelectorAll('[data-q="' + q + '"]').forEach(function (c) {
+                c.classList.remove('selected');
+            });
+            this.classList.add('selected');
+
+            setTimeout(function () {
+                if (q < 5) {
+                    transition('q' + q, 'q' + (q + 1));
+                    current = q + 1;
+                    setDots(current);
+                } else {
+                    transition('q5', 'contact');
+                    current = 6;
+                    setDots(6);
+                    setTimeout(function () {
+                        document.getElementById('inp-phone').focus();
+                    }, 450);
+                }
+            }, 300);
+        });
+    });
+
+    /* Contact form submit */
+    document.getElementById('submit-btn').addEventListener('click', function () {
+        var phone = document.getElementById('inp-phone').value.trim();
+        var errEl = document.getElementById('form-error');
+
+        if (!phone) {
+            errEl.style.display = 'block';
+            document.getElementById('inp-phone').focus();
+            return;
+        }
+
+        errEl.style.display = 'none';
+        this.disabled    = true;
+        this.textContent = 'Enviando…';
+
+        var match   = getNightMatch(answers);
+        var payload = {
+            name:        document.getElementById('inp-name').value.trim(),
+            phone:       phone,
+            email:       document.getElementById('inp-email').value.trim(),
+            q1:          answers[1],
+            q2:          answers[2],
+            q3:          answers[3],
+            q4:          answers[4],
+            q5:          answers[5],
+            night_match: match.type,
+        };
+
+        fetch('/api/waitlist', {
+            method:  'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body:    JSON.stringify(payload),
+        }).finally(function () {
+            transition('contact', 'done');
+            header.style.opacity = '0';
+            showDone();
+        });
+    });
+
+    function showDone() {
+        // Night reveal from answers
+        var match = getNightMatch(answers);
+        document.getElementById('done-night-type').textContent    = match.type;
+        document.getElementById('done-night-details').textContent = match.detail;
+        // Count up #0 → #MEMBER_NUM
+        var numEl    = document.getElementById('done-number');
+        var duration = 1400;
+        var start    = null;
+        function tick(ts) {
+            if (!start) start = ts;
+            var p     = Math.min((ts - start) / duration, 1);
+            var eased = 1 - Math.pow(1 - p, 3);
+            numEl.textContent = '#' + Math.round(eased * MEMBER_NUM);
+            if (p < 1) requestAnimationFrame(tick);
+        }
+        requestAnimationFrame(tick);
+
+    }
+
+    // Share button
+    document.getElementById('share-btn').addEventListener('click', function () {
+        var btn  = this;
+        var url  = window.location.href.replace('quiz.html', 'waitlist.html');
+        var text = 'Soy Founding Member #' + MEMBER_NUM + ' en NOTA — la forma nueva de salir en San Juan. Quedan pocos spots. Únete:';
+        if (navigator.share) {
+            navigator.share({ title: 'Nota', text: text, url: url });
+        } else {
+            navigator.clipboard.writeText(url).then(function () {
+                btn.textContent = 'Link copiado ✓';
+                setTimeout(function () { btn.textContent = 'Comparte tu noche →'; }, 2200);
+            });
+        }
+    });
+
+    setDots(1);
+}());
+</script>
+
+</body>
+</html>
